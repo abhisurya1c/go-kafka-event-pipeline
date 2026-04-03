@@ -1,0 +1,124 @@
+{
+    "info": {
+        "name": "Kafka Event Pipeline Complete",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Producing Events (Write)",
+            "item": [
+                {
+                    "name": "Push User Created",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"type\": \"UserCreated\",\n  \"eventId\": \"manual-u-001\",\n  \"timestamp\": \"2024-03-20T10:00:00Z\",\n  \"userId\": \"user-postman-01\",\n  \"name\": \"Postman Alice\",\n  \"email\": \"alice@postman.com\"\n}"
+                        },
+                        "url": "http://localhost:8080/events"
+                    }
+                },
+                {
+                    "name": "Push Order Placed",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"type\": \"OrderPlaced\",\n  \"eventId\": \"manual-o-001\",\n  \"timestamp\": \"2024-03-20T10:01:00Z\",\n  \"orderId\": \"order-postman-01\",\n  \"userId\": \"user-postman-01\",\n  \"amount\": 99.99,\n  \"status\": \"PENDING\"\n}"
+                        },
+                        "url": "http://localhost:8080/events"
+                    }
+                },
+                {
+                    "name": "Push Payment Settled",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"type\": \"PaymentSettled\",\n  \"eventId\": \"manual-p-001\",\n  \"timestamp\": \"2024-03-20T10:05:00Z\",\n  \"orderId\": \"order-postman-01\",\n  \"amount\": 99.99,\n  \"status\": \"SUCCESS\"\n}"
+                        },
+                        "url": "http://localhost:8080/events"
+                    }
+                },
+                {
+                    "name": "Push Inventory Adjusted",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"type\": \"InventoryAdjusted\",\n  \"eventId\": \"manual-i-001\",\n  \"timestamp\": \"2024-03-20T10:10:00Z\",\n  \"sku\": \"LAPTOP-X1\",\n  \"quantity\": 50\n}"
+                        },
+                        "url": "http://localhost:8080/events"
+                    }
+                },
+                {
+                    "name": "Push Malformed (Test DLQ)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"type\": \"Invalid\",\n  \"something\": \"wrong\"\n}"
+                        },
+                        "url": "http://localhost:8080/events"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Querying Data (Read)",
+            "item": [
+                {
+                    "name": "Get User Orders",
+                    "request": {
+                        "method": "GET",
+                        "url": "http://localhost:8080/users/user-postman-01"
+                    }
+                },
+                {
+                    "name": "Get Order with Payment",
+                    "request": {
+                        "method": "GET",
+                        "url": "http://localhost:8080/orders/order-postman-01"
+                    }
+                },
+                {
+                    "name": "Check Dead Letter Queue",
+                    "request": {
+                        "method": "GET",
+                        "url": "http://localhost:8080/dlq"
+                    }
+                }
+            ]
+        }
+    ]
+}
