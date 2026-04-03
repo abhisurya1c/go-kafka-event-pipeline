@@ -1,0 +1,38 @@
+### Read User with last 5 orders
+GET http://localhost:8080/users/user-123
+Accept: application/json
+
+### Read Order with payment status
+GET http://localhost:8080/orders/order-456
+Accept: application/json
+
+### Check DLQ (Redis)
+GET http://localhost:8080/dlq
+Accept: application/json
+
+### Add a New User (via Kafka)
+POST http://localhost:8080/events
+Content-Type: application/json
+
+{
+  "type": "UserCreated",
+  "eventId": "manual-uuid-001",
+  "timestamp": "2024-03-20T10:00:00Z",
+  "userId": "user-999",
+  "name": "Manual Test User",
+  "email": "manual@test.com"
+}
+
+### Add a New Order (via Kafka)
+POST http://localhost:8080/events
+Content-Type: application/json
+
+{
+  "type": "OrderPlaced",
+  "eventId": "manual-uuid-002",
+  "timestamp": "2024-03-20T10:01:00Z",
+  "orderId": "order-999",
+  "userId": "user-999",
+  "amount": 299.99,
+  "status": "PENDING"
+}

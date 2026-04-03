@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    ports:
+      - "1433:1433"
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Password123!"
+    healthcheck:
+      test: [ "CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "Password123!", "-Q", "SELECT 1", "-C" ]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  setup-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    user: root
+    depends_on:
+      mssql:
+        condition: service_healthy
+    volumes:
+      - ./sql/init.sql:/init.sql
+    command: >
+      /bin/bash -c "sleep 5; /opt/mssql-tools18/bin/sqlcmd -S mssql -U sa -P Password123! -d master -i /init.sql -C"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  api:
+    build: .
+    command: [ "/api" ]
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_BROKERS: kafka:29092
+      MSSQL_CONN: "sqlserver://sa:Password123!@mssql:1433?database=EventsDB&encrypt=disable"
+      REDIS_ADDR: redis:6379
+    depends_on:
+      mssql:
+        condition: service_healthy
+      setup-db:
+        condition: service_completed_successfully
+      kafka:
+        condition: service_started
+
+  consumer:
+    build: .
+    command: [ "/consumer" ]
+    environment:
+      KAFKA_BROKERS: kafka:29092
+      MSSQL_CONN: "sqlserver://sa:Password123!@mssql:1433?database=EventsDB&encrypt=disable"
+      REDIS_ADDR: redis:6379
+    depends_on:
+      mssql:
+        condition: service_healthy
+      setup-db:
+        condition: service_completed_successfully
+      kafka:
+        condition: service_started
+
+  producer:
+    build: .
+    command: [ "/producer" ]
+    environment:
+      KAFKA_BROKERS: kafka:29092
+    depends_on:
+      kafka:
+        condition: service_started
